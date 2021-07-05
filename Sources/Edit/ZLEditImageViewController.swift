@@ -59,7 +59,7 @@ public class ZLEditImageModel: NSObject {
 }
 
 public class ZLEditImageViewController: UIViewController {
-
+    
     static let filterColViewH: CGFloat = 80
     
     static let maxDrawLineImageWidth: CGFloat = 600
@@ -110,7 +110,7 @@ public class ZLEditImageViewController: UIViewController {
     var topShadowView: UIView!
     
     var topShadowLayer: CAGradientLayer!
-     
+    
     // 下方渐变阴影层
     var bottomShadowView: UIView!
     
@@ -171,6 +171,8 @@ public class ZLEditImageViewController: UIViewController {
         return self.originalImage.size
     }
     
+    @objc public var cancelCallback: (() -> Void)?
+    
     @objc public var editFinishBlock: ( (UIImage, ZLEditImageModel?) -> Void )?
     
     public override var prefersStatusBarHidden: Bool {
@@ -185,7 +187,7 @@ public class ZLEditImageViewController: UIViewController {
         zl_debugPrint("ZLEditImageViewController deinit")
     }
     
-    @objc public class func showEditImageVC(parentVC: UIViewController?, animate: Bool = false, image: UIImage, editModel: ZLEditImageModel? = nil, completion: ( (UIImage, ZLEditImageModel?) -> Void )? ) {
+    @objc public class func showEditImageVC(parentVC: UIViewController?, animate: Bool = false, image: UIImage, editModel: ZLEditImageModel? = nil, completion: ( (UIImage, ZLEditImageModel?) -> Void )? ,cancelCallback: (() -> Void)? = nil) {
         let tools = ZLPhotoConfiguration.default().editImageTools
         if ZLPhotoConfiguration.default().showClipDirectlyIfOnlyHasClipTool, tools.count == 1, tools.contains(.clip) {
             let vc = ZLClipImageViewController(image: image, editRect: editModel?.editRect, angle: editModel?.angle ?? 0, selectRatio: editModel?.selectRatio)
@@ -193,6 +195,7 @@ public class ZLEditImageViewController: UIViewController {
                 let m = ZLEditImageModel(drawPaths: [], mosaicPaths: [], editRect: editRect, angle: angle, selectRatio: ratio, selectFilter: .normal, textStickers: nil, imageStickers: nil)
                 completion?(image.clipImage(angle, editRect) ?? image, m)
             }
+            vc.cancelClipBlock = cancelCallback
             vc.animate = animate
             vc.modalPresentationStyle = .fullScreen
             parentVC?.present(vc, animated: animate, completion: nil)
@@ -332,7 +335,7 @@ public class ZLEditImageViewController: UIViewController {
                         self.filterCollectionView.scrollToItem(at: IndexPath(row: index, section: 0), at: .centeredHorizontally, animated: false)
                     }
                 }
-
+                
             }
         }
     }
@@ -574,6 +577,7 @@ public class ZLEditImageViewController: UIViewController {
     }
     
     @objc func cancelBtnClick() {
+        cancelCallback?()
         self.dismiss(animated: self.animate, completion: nil)
     }
     
@@ -992,7 +996,7 @@ public class ZLEditImageViewController: UIViewController {
             self.bottomShadowView.alpha = 1
         }
     }
-
+    
 }
 
 
